@@ -142,6 +142,24 @@ public static class PhxUtils
 
     public static float FloatFromString(string FloatString)
     {
+        int dotCount = 0;
+        string newFloatString = "";
+        foreach (char c in FloatString){
+            if (c == '.') dotCount++;
+
+            if (dotCount > 1) {
+                FloatString = newFloatString;
+                break;
+            } else {
+                newFloatString += c;
+            }
+
+        }
+
+        // Float parsing: hp_god 20_0 => second number specific case
+        if (FloatString.Contains("_")) FloatString = FloatString.Split('_')[0];
+        else if (FloatString.Contains(" ")) FloatString = FloatString.Split(' ')[0];
+
         float Result;
         try {
             Result = float.Parse(FloatString, System.Globalization.CultureInfo.InvariantCulture);

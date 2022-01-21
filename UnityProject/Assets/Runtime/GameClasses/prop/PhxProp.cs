@@ -101,20 +101,36 @@ public class PhxProp : PhxInstance<PhxProp.ClassProperties>, IPhxTickable
             }
             else if (properties[i] == 0x3be7b80a /*AttachToHardPoint*/)
             {
+                Debug.Log("Float parsing: " + values[i]);
                 string[] Parts = values[i].Split(new string[]{" "}, StringSplitOptions.RemoveEmptyEntries);
 
                 // AttachToHardPoint can have a second float parameter that determines how the long the
                 // AttachedEffect will take to respawn
 
+
+                if (values[i].Contains("_")){
+                    //Parts = values[i].Split(new string[]{"_"}, StringSplitOptions.RemoveEmptyEntries);
+                    //return;
+
+                }
+
+                //Float parsing: hp_god 20_0 => second number specific case
+                if (Parts.Length == 2){
+                    
+                }
+
                 string HpName = Parts[0];
 
                 float RespawnTime = 0f;
                 try {
-                    RespawnTime = Parts.Length > 1 ? float.Parse(Parts[1], System.Globalization.CultureInfo.InvariantCulture) : 0f;
+                    //RespawnTime = Parts.Length > 1 ? float.Parse(Parts[1], System.Globalization.CultureInfo.InvariantCulture) : 0f;
+                    //Float parsing: hp_god 20_0 => second number specific case
+                    RespawnTime = Parts.Length > 1 ? PhxUtils.FloatFromString(Parts[1]) : 0f;
                 }
                 catch 
                 {
                     Debug.LogErrorFormat("Failed to parse float from: {0}", Parts[1]);
+                    //return;
                 }
 
 

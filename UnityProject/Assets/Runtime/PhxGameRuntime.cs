@@ -475,8 +475,42 @@ public class PhxGameRuntime : MonoBehaviour
         return bExists;
     }
 
+
+    /*
+    config file has to look like this:
+    
+    phoenix.conf (this is the filename, content of the file between following equal signs)
+    ===================
+    GamePath=/Path/to/Game
+    MissionPath=/Path/To/Whatever
+    ===================
+
+    */
+    public void LoadConfigFile(){
+        Debug.Log("CWD:" + System.IO.Directory.GetCurrentDirectory());
+        if (!System.IO.File.Exists("phoenix.conf")){
+            Debug.Log("phoenix.conf config file not found...assuming hardcoded string in prefab");
+            return;
+        }
+
+        string[] lines = System.IO.File.ReadAllLines("phoenix.conf");
+        foreach (string line in lines){
+            string[] option = line.Split('=');
+            if (option[0] == "GamePath") {
+                GamePathString = option[1];
+            } else if (option[0] == "MissionPath"){
+                MissionListPath = option[1];
+            } else{
+                Debug.Log("Unknown config file option: " + option[0]);
+            }
+
+        }
+    }
+
     void Awake()
     {
+        LoadConfigFile();
+
         VersionString = Application.version;
         string[] subStr = VersionString.Split('.');
         Debug.Assert(subStr.Length == 3);
