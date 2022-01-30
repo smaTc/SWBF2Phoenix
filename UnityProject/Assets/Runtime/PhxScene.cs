@@ -16,7 +16,7 @@ public struct PhxTransform
     public Quaternion Rotation;
 }
 
-public class PhxRuntimeScene
+public class PhxScene
 {
     public Texture2D MapTexture { get; private set; }
 
@@ -26,11 +26,12 @@ public class PhxRuntimeScene
     List<IPhxTickable>        TickableInstances        = new List<IPhxTickable>();
     List<IPhxTickablePhysics> TickablePhysicsInstances = new List<IPhxTickablePhysics>();
     List<PhxCommandpost>      CommandPosts             = new List<PhxCommandpost>();
+    GameObject                Vehicles                 = new GameObject("Vehicles");
 
     Dictionary<string, PhxClass> Classes     = new Dictionary<string, PhxClass>();
     Dictionary<string, int>      InstanceMap = new Dictionary<string, int>();
 
-    PhxRuntimeEnvironment ENV;
+    PhxEnvironment ENV;
     Container EnvCon;
     bool bTerrainImported = false;
 
@@ -48,13 +49,13 @@ public class PhxRuntimeScene
 
     int InstanceCounter;
 
-    public PhxRuntimeScene(PhxRuntimeEnvironment env, Container c)
+    public PhxScene(PhxEnvironment env, Container c)
     {
         ENV = env;
         EnvCon = c;
         Cra = new CraMain();
 
-        ModelLoader.Instance.PhyMat = PhxGameRuntime.Instance.GroundPhyMat;
+        ModelLoader.Instance.PhyMat = PhxGame.Instance.GroundPhyMat;
     }
 
     public void SetProperty(string instName, string propName, object propValue)
@@ -297,6 +298,7 @@ public class PhxRuntimeScene
         Projectiles.Destroy();
         Instances.Clear();
         Classes.Clear();
+        UnityEngine.Object.Destroy(Vehicles);
         for (int i = 0; i < WorldRoots.Count; ++i)
         {
             UnityEngine.Object.Destroy(WorldRoots[i]);
@@ -428,6 +430,7 @@ public class PhxRuntimeScene
         instanceObject.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
 
         Type instType = PhxClassRegister.GetPhxInstanceType(rootClass.BaseClassName);
+
         if (instType != null)
         {
             PhxClass odf = GetClass(ec);
@@ -463,6 +466,10 @@ public class PhxRuntimeScene
             if (script is PhxCommandpost)
             {
                 CommandPosts.Add((PhxCommandpost)script);
+            }
+            if(script is PhxVehicle)
+            {
+                instanceObject.transform.parent = Vehicles.transform;
             }
         }
 

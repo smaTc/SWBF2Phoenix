@@ -7,12 +7,12 @@ public static class PhxLuaAPI
 {
 	public class Unicode : Attribute { }
 
-	static PhxGameRuntime GAME => PhxGameRuntime.Instance;
-	static PhxRuntimeEnvironment ENV => PhxGameRuntime.GetEnvironment();
-	static PhxRuntimeScene RTS => PhxGameRuntime.GetScene();
-	static PhxRuntimeMatch MT => PhxGameRuntime.GetMatch();
-	static PhxLuaRuntime RT => PhxGameRuntime.GetLuaRuntime();
-	static PhxTimerDB TDB => PhxGameRuntime.GetTimerDB();
+	static PhxGame GAME => PhxGame.Instance;
+	static PhxEnvironment ENV => PhxGame.GetEnvironment();
+	static PhxScene RTS => PhxGame.GetScene();
+	static PhxMatch MT => PhxGame.GetMatch();
+	static PhxLuaRuntime RT => PhxGame.GetLuaRuntime();
+	static PhxTimerDB TDB => PhxGame.GetTimerDB();
 	static Lua L => RT.GetLua();
 
 
@@ -461,15 +461,14 @@ public static class PhxLuaAPI
 		MT.SetUnitCount(teamIdx, numUnits);
 	}
 
-	public static void AddUnitClass(int teamIdx, string className, int unitCount)
+	public static void AddUnitClass(int teamIdx, string className, int unitCountMin)
 	{
-		MT.AddUnitClass(teamIdx, className, unitCount);
+		MT.AddUnitClass(teamIdx, className, unitCountMin);
 	}
 
-	public static void AddUnitClass(int teamIdx, string className, int unitCount, int unkwn1)
+	public static void AddUnitClass(int teamIdx, string className, int unitCountMin, int unitCountMax)
 	{
-		// TODO: unkwn1
-		MT.AddUnitClass(teamIdx, className, unitCount);
+		MT.AddUnitClass(teamIdx, className, unitCountMin, unitCountMax);
 	}
 
 	public static void SetDenseEnvironment(string isDense)
@@ -635,14 +634,14 @@ public static class PhxLuaAPI
 
 	public static void SetProperty(string instName, string propName, object propValue)
 	{
-		PhxRuntimeScene scene = PhxGameRuntime.GetScene();
+		PhxScene scene = PhxGame.GetScene();
 		// Debug.LogFormat("Setting property: {0} of instance: {1} to value: {2}", propName, instName, propValue);
 		scene?.SetProperty(instName, propName, propValue);
 	}
 
 	public static void SetClassProperty(string className, string propName, object propValue)
 	{
-		PhxRuntimeScene scene = PhxGameRuntime.GetScene();
+		PhxScene scene = PhxGame.GetScene();
 		scene?.SetClassProperty(className, propName, propValue);
 	}
 
@@ -1073,8 +1072,8 @@ public static class PhxLuaAPI
 			}
 		}
 
-		bool bForceAddon = path.StartsWith("dc:", StringComparison.InvariantCultureIgnoreCase);
-		if (bForceAddon)
+		bool bLoadFromAddon = path.StartsWith("dc:", StringComparison.InvariantCultureIgnoreCase);
+		if (bLoadFromAddon)
         {
 			path = path.Remove(0, 3);
 		}
@@ -1088,7 +1087,7 @@ public static class PhxLuaAPI
 		Debug.LogFormat("Called ReadDataFile from path: '{0}' with subLVLs: {1}", path, subLVLsStr);
 		*/
 
-		ENV.ScheduleRel(path, subLVLs.ToArray(), bForceAddon);
+		ENV.ScheduleRel(path, subLVLs.ToArray(), bLoadFromAddon);
 	}
 
 	public static void AddDownloadableContent(string threeLetterName, string scriptName, int levelMemoryModifier)
@@ -1096,6 +1095,13 @@ public static class PhxLuaAPI
 		GAME.RegisterAddonScript(scriptName, threeLetterName);
 	}
 
+	public static void SetStayInTurrets (bool b){
+
+	}
+
+	public static void FillAsteroidPath(string s1, string s2, string s3, int s4, int s5, int s6, int s7, int s8, int s9, int s10){
+
+	}
 
 
 
@@ -1211,8 +1217,8 @@ public static class PhxLuaAPI
 
 public static class PhxLuaEvents
 {
-	static PhxRuntimeEnvironment ENV { get { return PhxGameRuntime.GetEnvironment(); } }
-	static PhxLuaRuntime RT { get { return PhxGameRuntime.GetLuaRuntime(); } }
+	static PhxEnvironment ENV { get { return PhxGame.GetEnvironment(); } }
+	static PhxLuaRuntime RT { get { return PhxGame.GetLuaRuntime(); } }
 	static Lua L { get { return RT.GetLua(); } }
 
 	public enum Event
