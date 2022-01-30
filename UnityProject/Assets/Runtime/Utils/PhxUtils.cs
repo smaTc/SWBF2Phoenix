@@ -142,12 +142,14 @@ public static class PhxUtils
 
     public static unsafe float FloatFromString(string FloatString)
     {
+         // for cases where the format 20.0 25.0 isn't catched TODO: fix for better handling
+        if (FloatString.Contains(" ")) FloatString = FloatString.Split(' ')[0];
+
         Debug.Assert(FloatString.Length < 32);
         char* buffer = stackalloc char[32];
         fixed (char* str = FloatString)
 
-        // for cases where the format 20.0 25.0 isn't catched TODO: fix for better handling
-        if (FloatString.Contains(" ")) FloatString = FloatString.Split(' ')[0];
+       
         {
             for (int si = 0, bi = 0, nd = 0; si < FloatString.Length; ++si)
             {

@@ -479,7 +479,7 @@ public class PhxGame : MonoBehaviour
         foreach (string line in lines){
             string[] option = line.Split('=');
             if (option[0] == "GamePath") {
-                GamePathString = option[1];
+                Settings.GamePathString = option[1];
             } else if (option[0] == "MissionPath"){
                 MissionListPath = option[1];
             } else{

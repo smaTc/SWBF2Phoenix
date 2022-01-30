@@ -1095,6 +1095,13 @@ public static class PhxLuaAPI
 		GAME.RegisterAddonScript(scriptName, threeLetterName);
 	}
 
+	public static void SetStayInTurrets (bool b){
+
+	}
+
+	public static void FillAsteroidPath(string s1, string s2, string s3, int s4, int s5, int s6, int s7, int s8, int s9, int s10){
+
+	}
 
 
 
