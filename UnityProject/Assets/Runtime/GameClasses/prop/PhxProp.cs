@@ -10,7 +10,7 @@ using System.Runtime.ExceptionServices;
 
 public class PhxProp : PhxInstance<PhxProp.ClassProperties>, IPhxTickable
 {
-    protected static PhxRuntimeScene SCENE => PhxGameRuntime.GetScene();
+    protected static PhxScene SCENE => PhxGame.GetScene();
 
     public class ClassProperties : PhxClass 
     {
@@ -107,24 +107,10 @@ public class PhxProp : PhxInstance<PhxProp.ClassProperties>, IPhxTickable
                 // AttachToHardPoint can have a second float parameter that determines how the long the
                 // AttachedEffect will take to respawn
 
-
-                if (values[i].Contains("_")){
-                    //Parts = values[i].Split(new string[]{"_"}, StringSplitOptions.RemoveEmptyEntries);
-                    //return;
-
-                }
-
-                //Float parsing: hp_god 20_0 => second number specific case
-                if (Parts.Length == 2){
-                    
-                }
-
                 string HpName = Parts[0];
 
                 float RespawnTime = 0f;
                 try {
-                    //RespawnTime = Parts.Length > 1 ? float.Parse(Parts[1], System.Globalization.CultureInfo.InvariantCulture) : 0f;
-                    //Float parsing: hp_god 20_0 => second number specific case
                     RespawnTime = Parts.Length > 1 ? PhxUtils.FloatFromString(Parts[1]) : 0f;
                 }
                 catch 

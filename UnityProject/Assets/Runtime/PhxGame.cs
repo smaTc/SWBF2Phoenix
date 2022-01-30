@@ -17,35 +17,17 @@ using ELibLogType = LibSWBF2.Logging.ELogType;
 using System.IO;
 #endif
 
-
-public class PhxGameRuntime : MonoBehaviour
+// This is the Entry point for everything. In other words, this is ROOT.
+public class PhxGame : MonoBehaviour
 {
-    public static PhxGameRuntime Instance { get; private set; } = null;
+    public static PhxGame Instance { get; private set; } = null;
 
 
-    public PhxPath GamePath 
-    { 
-        get { return new PhxPath(GamePathString); } 
-        private set { GamePathString = value.ToString(); }
-    }
-
-
-    public enum PhxStartupBehaviour
-    {
-        MainMenu,
-        SWBF2Map,
-        UnityScene
-    }
+    public PhxPath GamePath => new PhxPath(Settings.GamePathString);
 
 
     [Header("Settings")]
-    public string GamePathString = "";
-
-    public string Language = "english";
-    public PhxStartupBehaviour StartupBehaviour;
-    public string StartupSWBF2Map;
-    public string StartupUnityScene;
-    public bool   InfiniteAmmo;
+    public PhxSettings Settings;
 
     [Header("References")]
     public PhxLoadscreen      InitScreenPrefab;
@@ -86,7 +68,7 @@ public class PhxGameRuntime : MonoBehaviour
     AudioSource[] UIAudio = new AudioSource[5];
     byte UIAudioHead = 0;
 
-    PhxRuntimeEnvironment Env;
+    PhxEnvironment Env;
     Dictionary<string, string> RegisteredAddons = new Dictionary<string, string>();
     
     // Maps addons to their root folders
@@ -106,20 +88,20 @@ public class PhxGameRuntime : MonoBehaviour
     // Unity will create multiple instances of this, without calling
     // 'Awake' and then destroy those instances again immediately...
 #if !UNITY_EDITOR
-    ~PhxGameRuntime()
+    ~PhxGame()
     {
-        Debug.Log("PhxGameRuntime destructor called");
+        Debug.Log("PhxGame destructor called");
         Destroy();
     }
 #endif
 
     public static PhxLuaRuntime GetLuaRuntime()
     {
-        PhxRuntimeEnvironment env = GetEnvironment();
+        PhxEnvironment env = GetEnvironment();
         return env == null ? null : env.GetLuaRuntime();
     }
 
-    public static PhxRuntimeEnvironment GetEnvironment()
+    public static PhxEnvironment GetEnvironment()
     {
         return Instance == null ? null : Instance.Env;
     }
@@ -129,21 +111,21 @@ public class PhxGameRuntime : MonoBehaviour
         return Instance == null ? null : Instance.Camera;
     }
 
-    public static PhxRuntimeScene GetScene()
+    public static PhxScene GetScene()
     {
-        PhxRuntimeEnvironment env = GetEnvironment();
+        PhxEnvironment env = GetEnvironment();
         return env == null ? null : env.GetScene();
     }
 
-    public static PhxRuntimeMatch GetMatch()
+    public static PhxMatch GetMatch()
     {
-        PhxRuntimeEnvironment env = GetEnvironment();
+        PhxEnvironment env = GetEnvironment();
         return env == null ? null : env.GetMatch();
     }
 
     public static PhxTimerDB GetTimerDB()
     {
-        PhxRuntimeEnvironment env = GetEnvironment();
+        PhxEnvironment env = GetEnvironment();
         return env == null ? null : env.GetTimerDB();
     }
 
@@ -152,7 +134,7 @@ public class PhxGameRuntime : MonoBehaviour
         Env?.Destroy();
         Env = null;
         Instance = null;
-        Debug.Log("PhxGameRuntime destroyed");
+        Debug.Log("PhxGame destroyed");
     }
 
     public void AddToMapRotation(List<string> mapScripts)
@@ -212,7 +194,7 @@ public class PhxGameRuntime : MonoBehaviour
         }
 
         Env?.Destroy();
-        Env = PhxRuntimeEnvironment.Create(StdLVLPC);
+        Env = PhxEnvironment.Create(StdLVLPC);
 
         if (!bInit)
         {
@@ -234,13 +216,13 @@ public class PhxGameRuntime : MonoBehaviour
         ShowLoadscreen();
         RemoveMenu(false);
 
-        PhxPath envPath = StdLVLPC;
+        PhxPath addonPath = null;
         if (RegisteredAddons.TryGetValue(mapScript.ToLower(), out string addonName))
         {
-            envPath = AddonPath / AddonRoots[addonName] / "data/_lvl_pc";
+            addonPath = AddonPath / AddonRoots[addonName] / "data/_lvl_pc";
         }
-        
 
+        // Unload previous Unity Scene (if any)
         if (UnitySceneName != null)
         {
             SceneManager.UnloadSceneAsync(UnitySceneName);
@@ -248,7 +230,7 @@ public class PhxGameRuntime : MonoBehaviour
         }
 
         Env?.Destroy();
-        Env = PhxRuntimeEnvironment.Create(envPath, StdLVLPC);
+        Env = PhxEnvironment.Create(StdLVLPC, addonPath);
         Env.ScheduleRel("load/common.lvl");
         Env.OnLoadscreenLoaded += OnLoadscreenTextureLoaded;
         Env.OnLoaded += OnEnvLoaded;
@@ -283,7 +265,7 @@ public class PhxGameRuntime : MonoBehaviour
             }
 
             Env?.Destroy();
-            Env = PhxRuntimeEnvironment.Create(StdLVLPC);
+            Env = PhxEnvironment.Create(StdLVLPC);
             Env.ScheduleRel("load/common.lvl");
 
             Env.OnLoadscreenLoaded += OnLoadscreenTextureLoaded;
@@ -365,7 +347,7 @@ public class PhxGameRuntime : MonoBehaviour
 
     void Init()
     {
-        Debug.Log("PhxGameRuntime Init");
+        Debug.Log("PhxGame Init");
         Debug.Assert(Instance == null);
 
         Instance = this;
@@ -378,30 +360,30 @@ public class PhxGameRuntime : MonoBehaviour
 
         if (GamePath.IsFile()              || 
             !GamePath.Exists()             || 
-            !CheckExistence("common.lvl")  ||
-            !CheckExistence("core.lvl")    ||
-            !CheckExistence("ingame.lvl")  ||
-            !CheckExistence("inshell.lvl") ||
-            !CheckExistence("mission.lvl") ||
-            !CheckExistence("shell.lvl"))
+            !CheckStdLVLExistence("common.lvl")  ||
+            !CheckStdLVLExistence("core.lvl")    ||
+            !CheckStdLVLExistence("ingame.lvl")  ||
+            !CheckStdLVLExistence("inshell.lvl") ||
+            !CheckStdLVLExistence("mission.lvl") ||
+            !CheckStdLVLExistence("shell.lvl"))
         {
             Debug.LogErrorFormat("Invalid game path '{0}!'", GamePath);
             return;
         }
 
-        if (StartupBehaviour == PhxStartupBehaviour.MainMenu)
+        if (Settings.BootMode == PhxBootMode.MainMenu)
         {
             EnterMainMenu(true);
         }
-        else if (StartupBehaviour == PhxStartupBehaviour.SWBF2Map)
+        else if (Settings.BootMode == PhxBootMode.SWBF2Map)
         {
-            Debug.Assert(!string.IsNullOrEmpty(StartupSWBF2Map));
-            EnterSWBF2Map(StartupSWBF2Map);
+            Debug.Assert(!string.IsNullOrEmpty(Settings.BootSWBF2Map));
+            EnterSWBF2Map(Settings.BootSWBF2Map);
         }
-        else if (StartupBehaviour == PhxStartupBehaviour.UnityScene)
+        else if (Settings.BootMode == PhxBootMode.UnityScene)
         {
-            Debug.Assert(!string.IsNullOrEmpty(StartupUnityScene));
-            EnterUnityScene(StartupUnityScene);
+            Debug.Assert(!string.IsNullOrEmpty(Settings.BootUnityScene));
+            EnterUnityScene(Settings.BootUnityScene);
         }
     }
 
@@ -464,13 +446,13 @@ public class PhxGameRuntime : MonoBehaviour
         OnMapLoaded?.Invoke();
     }
 
-    bool CheckExistence(string lvlName)
+    bool CheckStdLVLExistence(string lvlName)
     {
         PhxPath p = StdLVLPC / lvlName;
         bool bExists = p.Exists();
         if (!bExists)
         {
-            Debug.LogErrorFormat("Could not find '{0}'!", p);
+            Debug.LogError($"Could not find '{p}'!");
         }
         return bExists;
     }

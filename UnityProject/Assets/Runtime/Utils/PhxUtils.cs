@@ -1,10 +1,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using UnityEngine;
 using UnityEngine.Animations;
 using LibSWBF2.Utils;
-using System.Runtime.ExceptionServices;
 
 public static class PhxUtils
 {
@@ -140,36 +140,32 @@ public static class PhxUtils
     */
 
 
-    public static float FloatFromString(string FloatString)
+    public static unsafe float FloatFromString(string FloatString)
     {
-        int dotCount = 0;
-        string newFloatString = "";
-        foreach (char c in FloatString){
-            if (c == '.') dotCount++;
+        Debug.Assert(FloatString.Length < 32);
+        char* buffer = stackalloc char[32];
+        fixed (char* str = FloatString)
 
-            if (dotCount > 1) {
-                FloatString = newFloatString;
-                break;
-            } else {
-                newFloatString += c;
-            }
-
-        }
-
-        // Float parsing: hp_god 20_0 => second number specific case
-        if (FloatString.Contains("_")) FloatString = FloatString.Split('_')[0];
-        else if (FloatString.Contains(" ")) FloatString = FloatString.Split(' ')[0];
-
-        float Result;
-        try {
-            Result = float.Parse(FloatString, System.Globalization.CultureInfo.InvariantCulture);
-        }
-        catch 
+        // for cases where the format 20.0 25.0 isn't catched TODO: fix for better handling
+        if (FloatString.Contains(" ")) FloatString = FloatString.Split(' ')[0];
         {
-            Result = 0f;
+            for (int si = 0, bi = 0, nd = 0; si < FloatString.Length; ++si)
+            {
+                if (str[si] == '_') continue;     // ignore underscores
+                bool decPoint = str[si] == '.';
+                if (decPoint) ++nd;
+                if (decPoint && nd > 1) continue; // ignore more than one decimal points
+
+                buffer[bi++] = str[si];
+            }
+        }
+
+        if (!float.TryParse(new string(buffer), NumberStyles.Float, CultureInfo.InvariantCulture, out float result))
+        {
+            result = 0f;
             Debug.LogErrorFormat("Failed to parse a float from: {0}", FloatString);
         }
-        return Result;
+        return result;
     }    
 
 
